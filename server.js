@@ -3,7 +3,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import crypto from 'crypto';
 // Load environment variables from .env file
 dotenv.config();
@@ -28,21 +28,13 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '10mb' })); // Increased limit for base64 file uploads
 
-// --- Nodemailer Transport ---
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '587', 10),
-    secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+// --- SendGrid Configuration ---
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Helper function to send emails
 const sendEmail = async ({ to, subject, html }) => {
     try {
-        await transporter.sendMail({
+        await sgMail.send({
             from: process.env.EMAIL_FROM,
             to,
             subject,
