@@ -1290,12 +1290,9 @@ app.post('/api/communications/from-patient', async (req, res) => {
 });
 
 // --- Server Listener ---
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
 
-// Export for Vercel serverless
+// Export for Vercel serverless (if needed)
 export default app;
