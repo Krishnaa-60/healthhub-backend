@@ -306,7 +306,7 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
                                     <!-- Logo Header -->
                                     <tr>
                                         <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                            <img src="https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_e9t2lk.jpg" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                             <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                             <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                         </td>
@@ -429,6 +429,89 @@ app.patch('/api/users/:healthId', async (req, res) => {
             const oldAppointments = new Map((currentUser.appointments || []).map(a => [a.id, a]));
             updates.appointments.forEach(newAppt => {
                 const oldAppt = oldAppointments.get(newAppt.id);
+                
+                // Check if appointment was edited (date or time changed)
+                if (oldAppt && (oldAppt.date !== newAppt.date || oldAppt.time !== newAppt.time)) {
+                    sendEmail({
+                        to: currentUser.email,
+                        subject: `📅 HealthHub - Appointment Updated`,
+                        html: `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            </head>
+                            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
+                                    <tr>
+                                        <td align="center">
+                                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                                <tr>
+                                                    <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
+                                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
+                                                        <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 40px 30px;">
+                                                        <div style="text-align: center; margin-bottom: 30px;">
+                                                            <div style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 50%; padding: 20px; margin-bottom: 20px;">
+                                                                <span style="font-size: 48px;">✏️</span>
+                                                            </div>
+                                                        </div>
+                                                        <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 24px; text-align: center;">Appointment Updated!</h2>
+                                                        <p style="color: #4a5568; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px;">
+                                                            Hello <strong style="color: #27C690;">${currentUser.name}</strong>,
+                                                        </p>
+                                                        <p style="color: #4a5568; line-height: 1.8; margin: 0 0 30px 0; font-size: 16px;">
+                                                            Your appointment has been updated. Here are the new details:
+                                                        </p>
+                                                        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 25px; margin: 30px 0;">
+                                                            <table width="100%" cellpadding="8" cellspacing="0">
+                                                                <tr>
+                                                                    <td style="color: #92400e; font-weight: 600; font-size: 14px;">👨‍⚕️ Doctor:</td>
+                                                                    <td style="color: #b45309; font-size: 16px; font-weight: 700;">Dr. ${newAppt.doctorName}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="color: #92400e; font-weight: 600; font-size: 14px;">🏥 Hospital:</td>
+                                                                    <td style="color: #b45309; font-size: 16px; font-weight: 700;">${newAppt.hospitalName}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="color: #92400e; font-weight: 600; font-size: 14px;">📅 New Date:</td>
+                                                                    <td style="color: #b45309; font-size: 16px; font-weight: 700;">${newAppt.date}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="color: #92400e; font-weight: 600; font-size: 14px;">⏰ New Time:</td>
+                                                                    <td style="color: #b45309; font-size: 16px; font-weight: 700;">${formatTimeForEmail(newAppt.time)}</td>
+                                                                </tr>
+                                                            </table>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 30px; text-align: center; border-top: 3px solid #27C690;">
+                                                        <p style="color: #718096; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
+                                                            <strong style="color: #2d3748;">HealthHub</strong> - Empowering Your Health Journey<br>
+                                                            📧 gohealthhub.360@gmail.com
+                                                        </p>
+                                                        <p style="color: #a0aec0; font-size: 11px; margin: 10px 0 0 0;">
+                                                            © ${new Date().getFullYear()} HealthHub. All rights reserved.<br>
+                                                            This is an automated message, please do not reply to this email.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </body>
+                            </html>
+                        `,
+                    });
+                }
+                
                 // Send email only when reminder is newly set
                 if (newAppt.reminderSet && (!oldAppt || !oldAppt.reminderSet)) {
                     sendEmail({
@@ -448,7 +531,7 @@ app.patch('/api/users/:healthId', async (req, res) => {
                                             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                                                 <tr>
                                                     <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                                        <img src="https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_e9t2lk.jpg" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                                         <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                                         <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                                     </td>
@@ -546,6 +629,92 @@ app.patch('/api/users/:healthId', async (req, res) => {
             const oldPrescriptions = new Map((currentUser.prescriptions || []).map(p => [p.id, p]));
             updates.prescriptions.forEach(newPres => {
                 const oldPres = oldPrescriptions.get(newPres.id);
+                
+                // Check if prescription was edited
+                if (oldPres) {
+                    // Check if prescription details changed (doctor, hospital, date)
+                    if (oldPres.doctorName !== newPres.doctorName || oldPres.hospitalName !== newPres.hospitalName || oldPres.date !== newPres.date) {
+                        sendEmail({
+                            to: currentUser.email,
+                            subject: `💊 HealthHub - Prescription Updated`,
+                            html: `
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                    <meta charset="UTF-8">
+                                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                </head>
+                                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
+                                        <tr>
+                                            <td align="center">
+                                                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                                    <tr>
+                                                        <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
+                                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                                            <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
+                                                            <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 40px 30px;">
+                                                            <div style="text-align: center; margin-bottom: 30px;">
+                                                                <div style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 50%; padding: 20px; margin-bottom: 20px;">
+                                                                    <span style="font-size: 48px;">💊</span>
+                                                                </div>
+                                                            </div>
+                                                            <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 24px; text-align: center;">Prescription Updated!</h2>
+                                                            <p style="color: #4a5568; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px;">
+                                                                Hello <strong style="color: #27C690;">${currentUser.name}</strong>,
+                                                            </p>
+                                                            <p style="color: #4a5568; line-height: 1.8; margin: 0 0 30px 0; font-size: 16px;">
+                                                                Your prescription has been updated. Here are the new details:
+                                                            </p>
+                                                            <div style="background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); border-radius: 12px; padding: 25px; margin: 30px 0;">
+                                                                <table width="100%" cellpadding="8" cellspacing="0">
+                                                                    <tr>
+                                                                        <td style="color: #6b21a8; font-weight: 600; font-size: 14px;">👨‍⚕️ Doctor:</td>
+                                                                        <td style="color: #7e22ce; font-size: 16px; font-weight: 700;">Dr. ${newPres.doctorName}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td style="color: #6b21a8; font-weight: 600; font-size: 14px;">🏥 Hospital:</td>
+                                                                        <td style="color: #7e22ce; font-size: 16px; font-weight: 700;">${newPres.hospitalName}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td style="color: #6b21a8; font-weight: 600; font-size: 14px;">📅 Date:</td>
+                                                                        <td style="color: #7e22ce; font-size: 16px; font-weight: 700;">${newPres.date}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td style="color: #6b21a8; font-weight: 600; font-size: 14px;">💊 Medications:</td>
+                                                                        <td style="color: #7e22ce; font-size: 16px; font-weight: 700;">${newPres.medications.map(m => m.name).join(', ')}</td>
+                                                                    </tr>
+                                                                </table>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 30px; text-align: center; border-top: 3px solid #27C690;">
+                                                            <p style="color: #718096; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
+                                                                <strong style="color: #2d3748;">HealthHub</strong> - Empowering Your Health Journey<br>
+                                                                📧 gohealthhub.360@gmail.com
+                                                            </p>
+                                                            <p style="color: #a0aec0; font-size: 11px; margin: 10px 0 0 0;">
+                                                                © ${new Date().getFullYear()} HealthHub. All rights reserved.<br>
+                                                                This is an automated message, please do not reply to this email.
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </body>
+                                </html>
+                            `,
+                        });
+                    }
+                }
+                
                 if (!oldPres) return; // Only check existing prescriptions for changes
 
                 const oldMedications = new Map(oldPres.medications.map(m => [m.id, m]));
@@ -689,7 +858,7 @@ app.post('/api/records/request-otp', async (req, res) => {
                                     <!-- Logo Header -->
                                     <tr>
                                         <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                            <img src="https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_e9t2lk.jpg" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                             <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                             <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                         </td>
