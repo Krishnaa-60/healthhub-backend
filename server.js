@@ -31,14 +31,32 @@ app.use(express.json({ limit: '10mb' })); // Increased limit for base64 file upl
 // --- SendGrid Configuration ---
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Helper function to send emails
+// Helper function to send emails with anti-spam best practices
 const sendEmail = async ({ to, subject, html }) => {
     try {
         await sgMail.send({
-            from: process.env.EMAIL_FROM,
+            from: {
+                email: process.env.EMAIL_FROM,
+                name: 'HealthHub Team'
+            },
             to,
             subject,
             html,
+            text: html.replace(/<[^>]*>/g, ''), // Plain text version
+            replyTo: process.env.EMAIL_FROM,
+            trackingSettings: {
+                clickTracking: { enable: false },
+                openTracking: { enable: false }
+            },
+            mailSettings: {
+                bypassListManagement: { enable: false },
+                sandboxMode: { enable: false }
+            },
+            categories: ['healthhub-notifications'],
+            customArgs: {
+                app: 'healthhub',
+                environment: process.env.NODE_ENV || 'production'
+            }
         });
         console.log(`Email sent to ${to}`);
     } catch (error) {
@@ -272,8 +290,60 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
 
         await sendEmail({
             to: user.email,
-            subject: 'Your Healthhub Password Reset Code',
-            html: `<p>Your One-Time Password to reset your password is: <strong>${otpCode}</strong></p><p>This code will expire in 5 minutes.</p>`,
+            subject: 'HealthHub - Password Reset Code',
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <tr>
+                                        <td style="background: linear-gradient(135deg, #27C690 0%, #20A577 100%); padding: 30px; text-align: center;">
+                                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">HealthHub</h1>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <h2 style="color: #333333; margin: 0 0 20px 0;">Password Reset Request</h2>
+                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
+                                                Hello ${user.name},
+                                            </p>
+                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
+                                                We received a request to reset your password. Use the code below to proceed:
+                                            </p>
+                                            <div style="background-color: #f8f9fa; border-left: 4px solid #27C690; padding: 15px; margin: 20px 0;">
+                                                <p style="margin: 0; color: #333333; font-size: 14px;">Your verification code:</p>
+                                                <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold; color: #27C690; letter-spacing: 5px;">${otpCode}</p>
+                                            </div>
+                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
+                                                This code will expire in <strong>5 minutes</strong> for security reasons.
+                                            </p>
+                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
+                                                If you didn't request this password reset, please ignore this email or contact our support team.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                            <p style="color: #999999; font-size: 12px; margin: 0;">
+                                                © ${new Date().getFullYear()} HealthHub. All rights reserved.<br>
+                                                This is an automated message, please do not reply to this email.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            `,
         });
 
         res.status(200).json({ message: 'OTP sent to your email address.' });
@@ -508,8 +578,60 @@ app.post('/api/records/request-otp', async (req, res) => {
         // Send OTP via Email
         await sendEmail({
             to: user.email,
-            subject: 'Your Healthhub Record Access OTP',
-            html: `<p>Your One-Time Password to access your secure medical record is: <strong>${otpCode}</strong></p><p>This code will expire in 5 minutes.</p>`,
+            subject: 'HealthHub - Medical Record Access Code',
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <tr>
+                                        <td style="background: linear-gradient(135deg, #27C690 0%, #20A577 100%); padding: 30px; text-align: center;">
+                                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">HealthHub</h1>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <h2 style="color: #333333; margin: 0 0 20px 0;">Secure Medical Record Access</h2>
+                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
+                                                Hello ${user.name},
+                                            </p>
+                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
+                                                A request was made to access your secure medical records. Use the verification code below:
+                                            </p>
+                                            <div style="background-color: #f8f9fa; border-left: 4px solid #27C690; padding: 15px; margin: 20px 0;">
+                                                <p style="margin: 0; color: #333333; font-size: 14px;">Your verification code:</p>
+                                                <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold; color: #27C690; letter-spacing: 5px;">${otpCode}</p>
+                                            </div>
+                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
+                                                This code will expire in <strong>5 minutes</strong> for your security.
+                                            </p>
+                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
+                                                If you didn't request this access, please secure your account immediately.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                            <p style="color: #999999; font-size: 12px; margin: 0;">
+                                                © ${new Date().getFullYear()} HealthHub. All rights reserved.<br>
+                                                This is an automated message, please do not reply to this email.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            `,
         });
 
         res.status(200).json({ message: 'OTP sent successfully.' });
