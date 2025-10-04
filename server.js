@@ -306,7 +306,7 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
                                     <!-- Logo Header -->
                                     <tr>
                                         <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                             <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                             <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                         </td>
@@ -449,7 +449,7 @@ app.patch('/api/users/:healthId', async (req, res) => {
                                             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                                                 <tr>
                                                     <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                                         <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                                         <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                                     </td>
@@ -531,7 +531,7 @@ app.patch('/api/users/:healthId', async (req, res) => {
                                             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                                                 <tr>
                                                     <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                                         <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                                         <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                                     </td>
@@ -651,7 +651,7 @@ app.patch('/api/users/:healthId', async (req, res) => {
                                                 <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                                                     <tr>
                                                         <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                                             <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                                             <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                                         </td>
@@ -858,7 +858,7 @@ app.post('/api/records/request-otp', async (req, res) => {
                                     <!-- Logo Header -->
                                     <tr>
                                         <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/v1759577592/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://res.cloudinary.com/dxt2rdkub/image/upload/healthhub-logo_mjsytt.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
                                             <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
                                             <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                         </td>
