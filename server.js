@@ -290,7 +290,7 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
 
         await sendEmail({
             to: user.email,
-            subject: 'HealthHub - Password Reset Code',
+            subject: '🔐 HealthHub - Password Reset Code',
             html: `
                 <!DOCTYPE html>
                 <html>
@@ -298,40 +298,57 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 </head>
-                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
                         <tr>
                             <td align="center">
-                                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                    <!-- Logo Header -->
                                     <tr>
-                                        <td style="background: linear-gradient(135deg, #27C690 0%, #20A577 100%); padding: 30px; text-align: center;">
-                                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">HealthHub</h1>
+                                        <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
+                                            <img src="https://raw.githubusercontent.com/yourusername/healthhub/main/public/assets/healthhub-logo.png" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px;" />
+                                            <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
+                                            <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                         </td>
                                     </tr>
+                                    <!-- Content -->
                                     <tr>
                                         <td style="padding: 40px 30px;">
-                                            <h2 style="color: #333333; margin: 0 0 20px 0;">Password Reset Request</h2>
-                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
-                                                Hello ${user.name},
-                                            </p>
-                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
-                                                We received a request to reset your password. Use the code below to proceed:
-                                            </p>
-                                            <div style="background-color: #f8f9fa; border-left: 4px solid #27C690; padding: 15px; margin: 20px 0;">
-                                                <p style="margin: 0; color: #333333; font-size: 14px;">Your verification code:</p>
-                                                <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold; color: #27C690; letter-spacing: 5px;">${otpCode}</p>
+                                            <div style="text-align: center; margin-bottom: 30px;">
+                                                <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; padding: 20px; margin-bottom: 20px;">
+                                                    <span style="font-size: 48px;">🔐</span>
+                                                </div>
                                             </div>
-                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
-                                                This code will expire in <strong>5 minutes</strong> for security reasons.
+                                            <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 24px; text-align: center;">Password Reset Request</h2>
+                                            <p style="color: #4a5568; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px;">
+                                                Hello <strong style="color: #27C690;">${user.name}</strong>,
                                             </p>
-                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
-                                                If you didn't request this password reset, please ignore this email or contact our support team.
+                                            <p style="color: #4a5568; line-height: 1.8; margin: 0 0 30px 0; font-size: 16px;">
+                                                We received a request to reset your password. Use the verification code below to proceed:
+                                            </p>
+                                            <!-- OTP Box -->
+                                            <div style="background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); border: 3px dashed #27C690; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
+                                                <p style="margin: 0 0 10px 0; color: #2d3748; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
+                                                <p style="margin: 0; font-size: 42px; font-weight: 900; color: #27C690; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otpCode}</p>
+                                            </div>
+                                            <div style="background-color: #fff5f5; border-left: 4px solid #fc8181; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                                                <p style="margin: 0; color: #c53030; font-size: 14px; line-height: 1.6;">
+                                                    ⏰ <strong>Important:</strong> This code will expire in <strong>5 minutes</strong> for your security.
+                                                </p>
+                                            </div>
+                                            <p style="color: #718096; line-height: 1.8; margin: 20px 0; font-size: 14px; text-align: center;">
+                                                If you didn't request this password reset, please ignore this email or contact our support team immediately.
                                             </p>
                                         </td>
                                     </tr>
+                                    <!-- Footer -->
                                     <tr>
-                                        <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                            <p style="color: #999999; font-size: 12px; margin: 0;">
+                                        <td style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 30px; text-align: center; border-top: 3px solid #27C690;">
+                                            <p style="color: #718096; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
+                                                <strong style="color: #2d3748;">HealthHub</strong> - Empowering Your Health Journey<br>
+                                                📧 support@healthhub.com | 📱 +91-XXXX-XXXXXX
+                                            </p>
+                                            <p style="color: #a0aec0; font-size: 11px; margin: 10px 0 0 0;">
                                                 © ${new Date().getFullYear()} HealthHub. All rights reserved.<br>
                                                 This is an automated message, please do not reply to this email.
                                             </p>
@@ -416,8 +433,86 @@ app.patch('/api/users/:healthId', async (req, res) => {
                 if (newAppt.reminderSet && (!oldAppt || !oldAppt.reminderSet)) {
                     sendEmail({
                         to: currentUser.email,
-                        subject: `Reminder Set for your appointment on ${newAppt.date}`,
-                        html: `<p>Hi ${currentUser.name},</p><p>This is a confirmation that a reminder has been set for your appointment with <strong>${newAppt.doctorName}</strong> at <strong>${newAppt.hospitalName}</strong> on <strong>${newAppt.date}</strong> at <strong>${formatTimeForEmail(newAppt.time)}</strong>.</p><p>We will send you further notifications closer to the appointment time.</p><p>Thanks,<br/>The Healthhub Team</p>`,
+                        subject: `📅 HealthHub - Appointment Reminder Set`,
+                        html: `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            </head>
+                            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
+                                    <tr>
+                                        <td align="center">
+                                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                                <tr>
+                                                    <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
+                                                        <img src="https://raw.githubusercontent.com/yourusername/healthhub/main/public/assets/healthhub-logo.png" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px;" />
+                                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
+                                                        <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 40px 30px;">
+                                                        <div style="text-align: center; margin-bottom: 30px;">
+                                                            <div style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; padding: 20px; margin-bottom: 20px;">
+                                                                <span style="font-size: 48px;">📅</span>
+                                                            </div>
+                                                        </div>
+                                                        <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 24px; text-align: center;">Appointment Reminder Confirmed!</h2>
+                                                        <p style="color: #4a5568; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px;">
+                                                            Hello <strong style="color: #27C690;">${currentUser.name}</strong>,
+                                                        </p>
+                                                        <p style="color: #4a5568; line-height: 1.8; margin: 0 0 30px 0; font-size: 16px;">
+                                                            Your appointment reminder has been successfully set! Here are the details:
+                                                        </p>
+                                                        <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; padding: 25px; margin: 30px 0;">
+                                                            <table width="100%" cellpadding="8" cellspacing="0">
+                                                                <tr>
+                                                                    <td style="color: #065f46; font-weight: 600; font-size: 14px;">👨‍⚕️ Doctor:</td>
+                                                                    <td style="color: #047857; font-size: 16px; font-weight: 700;">Dr. ${newAppt.doctorName}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="color: #065f46; font-weight: 600; font-size: 14px;">🏥 Hospital:</td>
+                                                                    <td style="color: #047857; font-size: 16px; font-weight: 700;">${newAppt.hospitalName}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="color: #065f46; font-weight: 600; font-size: 14px;">📅 Date:</td>
+                                                                    <td style="color: #047857; font-size: 16px; font-weight: 700;">${newAppt.date}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="color: #065f46; font-weight: 600; font-size: 14px;">⏰ Time:</td>
+                                                                    <td style="color: #047857; font-size: 16px; font-weight: 700;">${formatTimeForEmail(newAppt.time)}</td>
+                                                                </tr>
+                                                            </table>
+                                                        </div>
+                                                        <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                                                            <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                                                                🔔 <strong>Reminder Active:</strong> We'll send you notifications closer to your appointment time.
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 30px; text-align: center; border-top: 3px solid #27C690;">
+                                                        <p style="color: #718096; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
+                                                            <strong style="color: #2d3748;">HealthHub</strong> - Empowering Your Health Journey<br>
+                                                            📧 support@healthhub.com | 📱 +91-XXXX-XXXXXX
+                                                        </p>
+                                                        <p style="color: #a0aec0; font-size: 11px; margin: 10px 0 0 0;">
+                                                            © ${new Date().getFullYear()} HealthHub. All rights reserved.<br>
+                                                            This is an automated message, please do not reply to this email.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </body>
+                            </html>
+                        `,
                     });
                 }
             });
@@ -578,7 +673,7 @@ app.post('/api/records/request-otp', async (req, res) => {
         // Send OTP via Email
         await sendEmail({
             to: user.email,
-            subject: 'HealthHub - Medical Record Access Code',
+            subject: '🏥 HealthHub - Medical Record Access Code',
             html: `
                 <!DOCTYPE html>
                 <html>
@@ -586,40 +681,59 @@ app.post('/api/records/request-otp', async (req, res) => {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 </head>
-                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
                         <tr>
                             <td align="center">
-                                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                    <!-- Logo Header -->
                                     <tr>
-                                        <td style="background: linear-gradient(135deg, #27C690 0%, #20A577 100%); padding: 30px; text-align: center;">
-                                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">HealthHub</h1>
+                                        <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
+                                            <img src="https://raw.githubusercontent.com/yourusername/healthhub/main/public/assets/healthhub-logo.png" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px;" />
+                                            <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">HealthHub</h1>
+                                            <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Your Health, Our Priority</p>
                                         </td>
                                     </tr>
+                                    <!-- Content -->
                                     <tr>
                                         <td style="padding: 40px 30px;">
-                                            <h2 style="color: #333333; margin: 0 0 20px 0;">Secure Medical Record Access</h2>
-                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
-                                                Hello ${user.name},
+                                            <div style="text-align: center; margin-bottom: 30px;">
+                                                <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 50%; padding: 20px; margin-bottom: 20px;">
+                                                    <span style="font-size: 48px;">🏥</span>
+                                                </div>
+                                            </div>
+                                            <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 24px; text-align: center;">Secure Medical Record Access</h2>
+                                            <p style="color: #4a5568; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px;">
+                                                Hello <strong style="color: #27C690;">${user.name}</strong>,
                                             </p>
-                                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
+                                            <p style="color: #4a5568; line-height: 1.8; margin: 0 0 30px 0; font-size: 16px;">
                                                 A request was made to access your secure medical records. Use the verification code below:
                                             </p>
-                                            <div style="background-color: #f8f9fa; border-left: 4px solid #27C690; padding: 15px; margin: 20px 0;">
-                                                <p style="margin: 0; color: #333333; font-size: 14px;">Your verification code:</p>
-                                                <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold; color: #27C690; letter-spacing: 5px;">${otpCode}</p>
+                                            <!-- OTP Box -->
+                                            <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 3px dashed #3b82f6; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
+                                                <p style="margin: 0 0 10px 0; color: #2d3748; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
+                                                <p style="margin: 0; font-size: 42px; font-weight: 900; color: #3b82f6; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otpCode}</p>
                                             </div>
-                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
-                                                This code will expire in <strong>5 minutes</strong> for your security.
-                                            </p>
-                                            <p style="color: #666666; line-height: 1.6; margin: 20px 0;">
-                                                If you didn't request this access, please secure your account immediately.
-                                            </p>
+                                            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                                                <p style="margin: 0; color: #dc2626; font-size: 14px; line-height: 1.6;">
+                                                    ⏰ <strong>Important:</strong> This code will expire in <strong>5 minutes</strong> for your security.
+                                                </p>
+                                            </div>
+                                            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                                                <p style="margin: 0; color: #d97706; font-size: 14px; line-height: 1.6;">
+                                                    🔒 <strong>Security Alert:</strong> If you didn't request this access, please secure your account immediately and contact support.
+                                                </p>
+                                            </div>
                                         </td>
                                     </tr>
+                                    <!-- Footer -->
                                     <tr>
-                                        <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                            <p style="color: #999999; font-size: 12px; margin: 0;">
+                                        <td style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 30px; text-align: center; border-top: 3px solid #27C690;">
+                                            <p style="color: #718096; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
+                                                <strong style="color: #2d3748;">HealthHub</strong> - Empowering Your Health Journey<br>
+                                                📧 support@healthhub.com | 📱 +91-XXXX-XXXXXX
+                                            </p>
+                                            <p style="color: #a0aec0; font-size: 11px; margin: 10px 0 0 0;">
                                                 © ${new Date().getFullYear()} HealthHub. All rights reserved.<br>
                                                 This is an automated message, please do not reply to this email.
                                             </p>
