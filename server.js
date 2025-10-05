@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import sgMail from '@sendgrid/mail';
 import crypto from 'crypto';
+import cron from 'node-cron';
 // Load environment variables from .env file
 dotenv.config();
 
@@ -1686,9 +1687,190 @@ app.post('/api/communications/from-patient', async (req, res) => {
     }
 });
 
+// --- Email Reminder System ---
+const checkAndSendReminders = async () => {
+    try {
+        const now = new Date();
+        const users = await User.find({});
+
+        for (const user of users) {
+            // Check Appointments
+            if (user.appointments && user.appointments.length > 0) {
+                for (const appointment of user.appointments) {
+                    const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+                    const timeDiff = appointmentDateTime - now;
+                    const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+                    // Send reminder 6 hours before
+                    if (hoursDiff > 5.9 && hoursDiff <= 6.1 && !appointment.reminder6HoursSent) {
+                        await sendAppointmentReminder(user, appointment, '6 hours');
+                        appointment.reminder6HoursSent = true;
+                        await user.save();
+                    }
+
+                    // Send reminder at appointment time (within 5 minutes)
+                    if (Math.abs(timeDiff) <= 5 * 60 * 1000 && !appointment.reminderAtTimeSent) {
+                        await sendAppointmentReminder(user, appointment, 'now');
+                        appointment.reminderAtTimeSent = true;
+                        await user.save();
+                    }
+                }
+            }
+
+            // Check Medications
+            if (user.medications && user.medications.length > 0) {
+                for (const medication of user.medications) {
+                    if (medication.times && medication.times.length > 0) {
+                        for (let i = 0; i < medication.times.length; i++) {
+                            const medTime = medication.times[i];
+                            const [hours, minutes] = medTime.split(':');
+                            const medDateTime = new Date(now);
+                            medDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                            
+                            const timeDiff = medDateTime - now;
+                            const minutesDiff = timeDiff / (1000 * 60);
+
+                            // Send reminder 5 minutes before
+                            if (minutesDiff > 4.5 && minutesDiff <= 5.5) {
+                                const reminderKey = `${medication.medicationId}_${medTime}_5min`;
+                                if (!medication.sentReminders || !medication.sentReminders.includes(reminderKey)) {
+                                    await sendMedicationReminder(user, medication, medTime, '5 minutes');
+                                    if (!medication.sentReminders) medication.sentReminders = [];
+                                    medication.sentReminders.push(reminderKey);
+                                    await user.save();
+                                }
+                            }
+
+                            // Send reminder at medication time
+                            if (Math.abs(timeDiff) <= 60 * 1000) {
+                                const reminderKey = `${medication.medicationId}_${medTime}_now`;
+                                if (!medication.sentReminders || !medication.sentReminders.includes(reminderKey)) {
+                                    await sendMedicationReminder(user, medication, medTime, 'now');
+                                    if (!medication.sentReminders) medication.sentReminders = [];
+                                    medication.sentReminders.push(reminderKey);
+                                    await user.save();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error in reminder system:', error);
+    }
+};
+
+const sendAppointmentReminder = async (user, appointment, timing) => {
+    const subject = timing === 'now' 
+        ? '🏥 Your Appointment is Now!' 
+        : '⏰ Appointment Reminder - 6 Hours to Go';
+    
+    const message = timing === 'now'
+        ? `Your appointment is scheduled for now!`
+        : `Your appointment is in 6 hours.`;
+
+    const html = `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
+                    <tr>
+                        <td align="center">
+                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
+                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://i.ibb.co/LzvTHv6/healthhub-logo.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700;">Appointment Reminder</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #333; margin-bottom: 20px;">Hello ${user.name},</h2>
+                                        <p style="color: #666; font-size: 16px; line-height: 1.6;">${message}</p>
+                                        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                            <p style="margin: 5px 0;"><strong>Hospital:</strong> ${appointment.hospitalName || 'N/A'}</p>
+                                            <p style="margin: 5px 0;"><strong>Doctor:</strong> ${appointment.doctorName || appointment.patientName || 'N/A'}</p>
+                                            <p style="margin: 5px 0;"><strong>Date:</strong> ${appointment.date}</p>
+                                            <p style="margin: 5px 0;"><strong>Time:</strong> ${appointment.time}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+        </html>
+    `;
+
+    await sendEmail({ to: user.email, subject, html });
+};
+
+const sendMedicationReminder = async (user, medication, time, timing) => {
+    const subject = timing === 'now' 
+        ? '💊 Time to Take Your Medication!' 
+        : '⏰ Medication Reminder - 5 Minutes';
+    
+    const message = timing === 'now'
+        ? `It's time to take your medication!`
+        : `Reminder: Take your medication in 5 minutes.`;
+
+    const html = `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
+                    <tr>
+                        <td align="center">
+                            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
+                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://i.ibb.co/LzvTHv6/healthhub-logo.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
+                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700;">Medication Reminder</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #333; margin-bottom: 20px;">Hello ${user.name},</h2>
+                                        <p style="color: #666; font-size: 16px; line-height: 1.6;">${message}</p>
+                                        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                            <p style="margin: 5px 0;"><strong>Medication:</strong> ${medication.name}</p>
+                                            <p style="margin: 5px 0;"><strong>Dosage:</strong> ${medication.dosage}</p>
+                                            <p style="margin: 5px 0;"><strong>Time:</strong> ${time}</p>
+                                            ${medication.instructions ? `<p style="margin: 5px 0;"><strong>Instructions:</strong> ${medication.instructions}</p>` : ''}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+        </html>
+    `;
+
+    await sendEmail({ to: user.email, subject, html });
+};
+
+// Run reminder check every minute
+cron.schedule('* * * * *', () => {
+    console.log('Checking for reminders...');
+    checkAndSendReminders();
+});
+
 // --- Server Listener ---
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+  console.log('Email reminder system is active');
 });
 
 // Export for Vercel serverless (if needed)
