@@ -1770,6 +1770,12 @@ const sendAppointmentReminder = async (user, appointment, timing) => {
         ? `Your appointment is scheduled for now!`
         : `Your appointment is in 6 hours.`;
 
+    // Parse appointment date to get month and day
+    const apptDate = new Date(appointment.date);
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[apptDate.getMonth()];
+    const day = apptDate.getDate();
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -1784,19 +1790,28 @@ const sendAppointmentReminder = async (user, appointment, timing) => {
                             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                                 <tr>
                                     <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://i.ibb.co/LzvTHv6/healthhub-logo.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
-                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700;">Appointment Reminder</h1>
+                                        <div style="width: 80px; height: 80px; margin: 0 auto 15px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            <span style="font-size: 48px;">🏥</span>
+                                        </div>
+                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700;">HealthHub</h1>
+                                        <p style="color: #e8f5f1; margin: 5px 0 0 0; font-size: 14px;">Appointment Reminder</p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #333; margin-bottom: 20px;">Hello ${user.name},</h2>
-                                        <p style="color: #666; font-size: 16px; line-height: 1.6;">${message}</p>
-                                        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                                            <p style="margin: 5px 0;"><strong>Hospital:</strong> ${appointment.hospitalName || 'N/A'}</p>
-                                            <p style="margin: 5px 0;"><strong>Doctor:</strong> ${appointment.doctorName || appointment.patientName || 'N/A'}</p>
-                                            <p style="margin: 5px 0;"><strong>Date:</strong> ${appointment.date}</p>
-                                            <p style="margin: 5px 0;"><strong>Time:</strong> ${appointment.time}</p>
+                                    <td style="padding: 40px 30px; text-align: center;">
+                                        <div style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; padding: 20px; margin-bottom: 20px;">
+                                            <div style="background: white; border-radius: 12px; padding: 15px 20px; min-width: 80px;">
+                                                <div style="background: #ef4444; color: white; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px 4px 0 0; margin: -15px -20px 8px -20px;">${month}</div>
+                                                <div style="font-size: 36px; font-weight: bold; color: #1f2937; line-height: 1;">${day}</div>
+                                            </div>
+                                        </div>
+                                        <h2 style="color: #333; margin-bottom: 10px; font-size: 24px;">Hello ${user.name},</h2>
+                                        <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">${message}</p>
+                                        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left;">
+                                            <p style="margin: 8px 0;"><strong style="color: #047857;">Hospital:</strong> <span style="color: #666;">${appointment.hospitalName || 'N/A'}</span></p>
+                                            <p style="margin: 8px 0;"><strong style="color: #047857;">Doctor:</strong> <span style="color: #666;">${appointment.doctorName || appointment.patientName || 'N/A'}</span></p>
+                                            <p style="margin: 8px 0;"><strong style="color: #047857;">Date:</strong> <span style="color: #666;">${appointment.date}</span></p>
+                                            <p style="margin: 8px 0;"><strong style="color: #047857;">Time:</strong> <span style="color: #666;">${appointment.time}</span></p>
                                         </div>
                                     </td>
                                 </tr>
@@ -1833,20 +1848,26 @@ const sendMedicationReminder = async (user, medication, time, timing) => {
                         <td align="center">
                             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                                 <tr>
-                                    <td style="background: linear-gradient(135deg, #27C690 0%, #1fa87a 50%, #17956b 100%); padding: 40px 30px; text-align: center;">
-                                        <img src="${process.env.EMAIL_LOGO_URL || 'https://i.ibb.co/LzvTHv6/healthhub-logo.jpg'}" alt="HealthHub Logo" style="max-width: 180px; height: auto; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />
-                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700;">Medication Reminder</h1>
+                                    <td style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; text-align: center;">
+                                        <div style="width: 80px; height: 80px; margin: 0 auto 15px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            <span style="font-size: 48px;">💊</span>
+                                        </div>
+                                        <h1 style="color: #ffffff; margin: 10px 0 0 0; font-size: 28px; font-weight: 700;">HealthHub</h1>
+                                        <p style="color: #f3e8ff; margin: 5px 0 0 0; font-size: 14px;">Medication Reminder</p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #333; margin-bottom: 20px;">Hello ${user.name},</h2>
-                                        <p style="color: #666; font-size: 16px; line-height: 1.6;">${message}</p>
-                                        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                                            <p style="margin: 5px 0;"><strong>Medication:</strong> ${medication.name}</p>
-                                            <p style="margin: 5px 0;"><strong>Dosage:</strong> ${medication.dosage}</p>
-                                            <p style="margin: 5px 0;"><strong>Time:</strong> ${time}</p>
-                                            ${medication.instructions ? `<p style="margin: 5px 0;"><strong>Instructions:</strong> ${medication.instructions}</p>` : ''}
+                                    <td style="padding: 40px 30px; text-align: center;">
+                                        <div style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 50%; padding: 20px; margin-bottom: 20px;">
+                                            <span style="font-size: 48px;">⏰</span>
+                                        </div>
+                                        <h2 style="color: #333; margin-bottom: 10px; font-size: 24px;">Hello ${user.name},</h2>
+                                        <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">${message}</p>
+                                        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left;">
+                                            <p style="margin: 8px 0;"><strong style="color: #7c3aed;">Medication:</strong> <span style="color: #666;">${medication.name}</span></p>
+                                            <p style="margin: 8px 0;"><strong style="color: #7c3aed;">Dosage:</strong> <span style="color: #666;">${medication.dosage}</span></p>
+                                            <p style="margin: 8px 0;"><strong style="color: #7c3aed;">Time:</strong> <span style="color: #666;">${time}</span></p>
+                                            ${medication.instructions ? `<p style="margin: 8px 0;"><strong style="color: #7c3aed;">Instructions:</strong> <span style="color: #666;">${medication.instructions}</span></p>` : ''}
                                         </div>
                                     </td>
                                 </tr>
