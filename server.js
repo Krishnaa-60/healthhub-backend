@@ -1883,10 +1883,31 @@ cron.schedule('* * * * *', () => {
     checkAndSendReminders();
 });
 
+// Keep-alive: Ping the server every 10 minutes to prevent Render free tier from sleeping
+cron.schedule('*/10 * * * *', async () => {
+    try {
+        const serverUrl = process.env.SERVER_URL || 'https://healthhub-backend-wlhxonrender.com';
+        const response = await fetch(`${serverUrl}/api/health`);
+        console.log(`Keep-alive ping: ${response.status} - ${new Date().toISOString()}`);
+    } catch (error) {
+        console.error('Keep-alive ping failed:', error.message);
+    }
+});
+
+// Health check endpoint for keep-alive
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'healthy', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
 // --- Server Listener ---
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log('Email reminder system is active');
+  console.log('Keep-alive system is active');
 });
 
 // Export for Vercel serverless (if needed)
