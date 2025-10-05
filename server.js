@@ -1688,6 +1688,9 @@ app.post('/api/communications/from-patient', async (req, res) => {
 });
 
 // --- Email Reminder System ---
+// Store sent reminders in memory (resets on server restart)
+const sentReminders = new Set();
+
 const checkAndSendReminders = async () => {
     try {
         const now = new Date();
@@ -1702,17 +1705,17 @@ const checkAndSendReminders = async () => {
                     const hoursDiff = timeDiff / (1000 * 60 * 60);
 
                     // Send reminder 6 hours before
-                    if (hoursDiff > 5.9 && hoursDiff <= 6.1 && !appointment.reminder6HoursSent) {
+                    const reminder6HKey = `${user.healthId}_${appointment.id}_6h`;
+                    if (hoursDiff > 5.9 && hoursDiff <= 6.1 && !sentReminders.has(reminder6HKey)) {
                         await sendAppointmentReminder(user, appointment, '6 hours');
-                        appointment.reminder6HoursSent = true;
-                        await user.save();
+                        sentReminders.add(reminder6HKey);
                     }
 
                     // Send reminder at appointment time (within 5 minutes)
-                    if (Math.abs(timeDiff) <= 5 * 60 * 1000 && !appointment.reminderAtTimeSent) {
+                    const reminderNowKey = `${user.healthId}_${appointment.id}_now`;
+                    if (Math.abs(timeDiff) <= 5 * 60 * 1000 && !sentReminders.has(reminderNowKey)) {
                         await sendAppointmentReminder(user, appointment, 'now');
-                        appointment.reminderAtTimeSent = true;
-                        await user.save();
+                        sentReminders.add(reminderNowKey);
                     }
                 }
             }
@@ -1731,25 +1734,17 @@ const checkAndSendReminders = async () => {
                             const minutesDiff = timeDiff / (1000 * 60);
 
                             // Send reminder 5 minutes before
-                            if (minutesDiff > 4.5 && minutesDiff <= 5.5) {
-                                const reminderKey = `${medication.medicationId}_${medTime}_5min`;
-                                if (!medication.sentReminders || !medication.sentReminders.includes(reminderKey)) {
-                                    await sendMedicationReminder(user, medication, medTime, '5 minutes');
-                                    if (!medication.sentReminders) medication.sentReminders = [];
-                                    medication.sentReminders.push(reminderKey);
-                                    await user.save();
-                                }
+                            const reminder5MinKey = `${user.healthId}_${medication.medicationId}_${medTime}_5min_${now.toDateString()}`;
+                            if (minutesDiff > 4.5 && minutesDiff <= 5.5 && !sentReminders.has(reminder5MinKey)) {
+                                await sendMedicationReminder(user, medication, medTime, '5 minutes');
+                                sentReminders.add(reminder5MinKey);
                             }
 
                             // Send reminder at medication time
-                            if (Math.abs(timeDiff) <= 60 * 1000) {
-                                const reminderKey = `${medication.medicationId}_${medTime}_now`;
-                                if (!medication.sentReminders || !medication.sentReminders.includes(reminderKey)) {
-                                    await sendMedicationReminder(user, medication, medTime, 'now');
-                                    if (!medication.sentReminders) medication.sentReminders = [];
-                                    medication.sentReminders.push(reminderKey);
-                                    await user.save();
-                                }
+                            const reminderNowKey = `${user.healthId}_${medication.medicationId}_${medTime}_now_${now.toDateString()}`;
+                            if (Math.abs(timeDiff) <= 60 * 1000 && !sentReminders.has(reminderNowKey)) {
+                                await sendMedicationReminder(user, medication, medTime, 'now');
+                                sentReminders.add(reminderNowKey);
                             }
                         }
                     }
