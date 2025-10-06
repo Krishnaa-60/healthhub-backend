@@ -425,6 +425,20 @@ app.patch('/api/users/:healthId', async (req, res) => {
             return `${h12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
         };
 
+        // Avoid timezone shifts: format YYYY-MM-DD without constructing Date()
+        const formatDateForEmail = (dateStr) => {
+            if (!dateStr) return 'N/A';
+            try {
+                const [y, m, d] = dateStr.split('-');
+                const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                const monthIndex = Math.max(0, Math.min(11, parseInt(m, 10) - 1));
+                const day = parseInt(d, 10).toString();
+                return `${monthNames[monthIndex]} ${day}, ${y}`;
+            } catch {
+                return dateStr;
+            }
+        };
+
         // Handle appointment reminder emails for PATIENTS
         if (currentUser.role === 'Patient' && updates.appointments && currentUser.email) {
             const oldAppointments = new Map((currentUser.appointments || []).map(a => [a.id, a]));
@@ -611,14 +625,76 @@ app.patch('/api/users/:healthId', async (req, res) => {
             if (newAppointment && currentUser.email) {
                  sendEmail({
                     to: currentUser.email,
-                    subject: `Appointment Reminder: ${newAppointment.patientName}`,
+                    subject: `📅 HealthHub - Appointment Scheduled` ,
                     html: `
-                        <p>Hi Dr. ${currentUser.name.split(' ').pop()},</p>
-                        <p>This is a confirmation that you have scheduled an appointment for <strong>${newAppointment.patientName}</strong>.</p>
-                        <p><strong>Date:</strong> ${newAppointment.date}</p>
-                        <p><strong>Time:</strong> ${formatTimeForEmail(newAppointment.time)}</p>
-                        <p>This has been added to your Healthhub calendar.</p>
-                        <p>Thanks,<br/>The Healthhub Team</p>
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <meta charset="UTF-8" />
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                        </head>
+                        <body style="margin:0;padding:0;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                          <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+                            <tr>
+                              <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+                                  <tr>
+                                    <td style="background:linear-gradient(135deg,#27C690 0%,#1fa87a 50%,#17956b 100%);padding:40px 30px;text-align:center;">
+                                      <img src="${process.env.EMAIL_LOGO_URL || 'https://i.ibb.co/LzvTHv6/healthhub-logo.jpg'}" alt="HealthHub Logo" style="max-width:180px;height:auto;margin:0 auto 10px;display:block;" />
+                                      <h1 style="color:#ffffff;margin:10px 0 0 0;font-size:28px;font-weight:700;">HealthHub</h1>
+                                      <p style="color:#e8f5f1;margin:5px 0 0 0;font-size:14px;">Your Health, Our Priority</p>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding:40px 30px;">
+                                      <div style="text-align:center;margin-bottom:30px;">
+                                        <div style="display:inline-block;background:linear-gradient(135deg,#10b981 0%,#059669 100%);border-radius:50%;padding:20px;margin-bottom:20px;">
+                                          <span style="font-size:48px;">📅</span>
+                                        </div>
+                                      </div>
+                                      <h2 style="color:#2d3748;margin:0 0 20px 0;font-size:24px;text-align:center;">Appointment Scheduled</h2>
+                                      <p style="color:#4a5568;line-height:1.8;margin:0 0 20px 0;font-size:16px;text-align:center;">
+                                        Hi Dr. ${currentUser.name || ''}, you have scheduled an appointment.
+                                      </p>
+                                      <div style="background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);border-radius:12px;padding:25px;margin:30px 0;">
+                                        <table width="100%" cellpadding="8" cellspacing="0">
+                                          <tr>
+                                            <td style="color:#065f46;font-weight:600;font-size:14px;">👤 Patient:</td>
+                                            <td style="color:#047857;font-size:16px;font-weight:700;">${newAppointment.patientName || ''}</td>
+                                          </tr>
+                                          <tr>
+                                            <td style="color:#065f46;font-weight:600;font-size:14px;">🏥 Hospital:</td>
+                                            <td style="color:#047857;font-size:16px;font-weight:700;">${currentUser.currentHospital || newAppointment.hospitalName || ''}</td>
+                                          </tr>
+                                          <tr>
+                                            <td style="color:#065f46;font-weight:600;font-size:14px;">📅 Date:</td>
+                                            <td style="color:#047857;font-size:16px;font-weight:700;">${formatDateForEmail(newAppointment.date)}</td>
+                                          </tr>
+                                          <tr>
+                                            <td style="color:#065f46;font-weight:600;font-size:14px;">⏰ Time:</td>
+                                            <td style="color:#047857;font-size:16px;font-weight:700;">${formatTimeForEmail(newAppointment.time)}</td>
+                                          </tr>
+                                        </table>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="background:linear-gradient(135deg,#f7fafc 0%,#edf2f7 100%);padding:30px;text-align:center;border-top:3px solid #27C690;">
+                                      <p style="color:#718096;font-size:13px;margin:0 0 10px 0;line-height:1.6;">
+                                        <strong style="color:#2d3748;">HealthHub</strong> - Empowering Your Health Journey<br/>
+                                        📧 ${process.env.EMAIL_FROM || 'support@healthhub.com'}
+                                      </p>
+                                      <p style="color:#a0aec0;font-size:11px;margin:10px 0 0 0;">
+                                        © ${new Date().getFullYear()} HealthHub. All rights reserved.
+                                      </p>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </body>
+                        </html>
                     `,
                 });
             }
@@ -750,17 +826,69 @@ app.patch('/api/users/:healthId', async (req, res) => {
                     try {
                         await sendEmail({
                             to: currentUser.email,
-                            subject: `Appointment Updated: ${newAppt.patientName || 'Patient'}`,
+                            subject: `✏️ HealthHub - Appointment Updated` ,
                             html: `
-                                <p>Hi Dr. ${currentUser.name || ''},</p>
-                                <p>The appointment has been updated.</p>
-                                <ul>
-                                  <li><strong>Patient:</strong> ${newAppt.patientName || ''}</li>
-                                  <li><strong>Date:</strong> ${newAppt.date}</li>
-                                  <li><strong>Time:</strong> ${formatTimeForEmail(newAppt.time)}</li>
-                                  <li><strong>Hospital:</strong> ${currentUser.currentHospital || newAppt.hospitalName || ''}</li>
-                                </ul>
-                                <p>— HealthHub</p>
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                  <meta charset="UTF-8" />
+                                  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                                </head>
+                                <body style="margin:0;padding:0;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                                  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+                                    <tr><td align="center">
+                                      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+                                        <tr>
+                                          <td style="background:linear-gradient(135deg,#27C690 0%,#1fa87a 50%,#17956b 100%);padding:40px 30px;text-align:center;">
+                                            <img src="${process.env.EMAIL_LOGO_URL || 'https://i.ibb.co/LzvTHv6/healthhub-logo.jpg'}" alt="HealthHub Logo" style="max-width:180px;height:auto;margin:0 auto 10px;display:block;" />
+                                            <h1 style="color:#ffffff;margin:10px 0 0 0;font-size:28px;font-weight:700;">HealthHub</h1>
+                                            <p style="color:#e8f5f1;margin:5px 0 0 0;font-size:14px;">Your Health, Our Priority</p>
+                                          </td>
+                                        </tr>
+                                        <tr>
+                                          <td style="padding:40px 30px;">
+                                            <div style="text-align:center;margin-bottom:30px;">
+                                              <div style="display:inline-block;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border-radius:50%;padding:20px;margin-bottom:20px;">
+                                                <span style="font-size:48px;">✏️</span>
+                                              </div>
+                                            </div>
+                                            <h2 style="color:#2d3748;margin:0 0 20px 0;font-size:24px;text-align:center;">Appointment Updated</h2>
+                                            <div style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-radius:12px;padding:25px;margin:30px 0;">
+                                              <table width="100%" cellpadding="8" cellspacing="0">
+                                                <tr>
+                                                  <td style="color:#92400e;font-weight:600;font-size:14px;">👤 Patient:</td>
+                                                  <td style="color:#b45309;font-size:16px;font-weight:700;">${newAppt.patientName || ''}</td>
+                                                </tr>
+                                                <tr>
+                                                  <td style="color:#92400e;font-weight:600;font-size:14px;">🏥 Hospital:</td>
+                                                  <td style="color:#b45309;font-size:16px;font-weight:700;">${currentUser.currentHospital || newAppt.hospitalName || ''}</td>
+                                                </tr>
+                                                <tr>
+                                                  <td style="color:#92400e;font-weight:600;font-size:14px;">📅 New Date:</td>
+                                                  <td style="color:#b45309;font-size:16px;font-weight:700;">${formatDateForEmail(newAppt.date)}</td>
+                                                </tr>
+                                                <tr>
+                                                  <td style="color:#92400e;font-weight:600;font-size:14px;">⏰ New Time:</td>
+                                                  <td style="color:#b45309;font-size:16px;font-weight:700;">${formatTimeForEmail(newAppt.time)}</td>
+                                                </tr>
+                                              </table>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                        <tr>
+                                          <td style="background:linear-gradient(135deg,#f7fafc 0%,#edf2f7 100%);padding:30px;text-align:center;border-top:3px solid #27C690;">
+                                            <p style="color:#718096;font-size:13px;margin:0 0 10px 0;line-height:1.6;">
+                                              <strong style="color:#2d3748;">HealthHub</strong> - Empowering Your Health Journey<br/>
+                                              📧 ${process.env.EMAIL_FROM || 'support@healthhub.com'}
+                                            </p>
+                                            <p style="color:#a0aec0;font-size:11px;margin:10px 0 0 0;">© ${new Date().getFullYear()} HealthHub. All rights reserved.</p>
+                                          </td>
+                                        </tr>
+                                      </table>
+                                    </td></tr>
+                                  </table>
+                                </body>
+                                </html>
                             `,
                         });
                     } catch (e) {
