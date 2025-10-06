@@ -34,36 +34,36 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Helper function to send emails with anti-spam best practices
 const sendEmail = async ({ to, subject, html }) => {
-    try {
-        await sgMail.send({
-            from: {
-                email: process.env.EMAIL_FROM,
-                name: 'HealthHub Team'
-            },
-            to,
-            subject,
-            html,
-            text: html.replace(/<[^>]*>/g, ''), // Plain text version
-            replyTo: process.env.EMAIL_FROM,
-            trackingSettings: {
-                clickTracking: { enable: false },
-                openTracking: { enable: false }
-            },
-            mailSettings: {
-                bypassListManagement: { enable: false },
-                sandboxMode: { enable: false }
-            },
-            categories: ['healthhub-notifications'],
-            customArgs: {
-                app: 'healthhub',
-                environment: process.env.NODE_ENV || 'production'
-            }
-        });
-        console.log(`Email sent to ${to}`);
-    } catch (error) {
-        console.error(`Error sending email to ${to}:`, error);
-        // We don't throw an error here to not fail the main request
-    }
+  try {
+    await sgMail.send({
+      from: {
+        email: process.env.EMAIL_FROM,
+        name: 'HealthHub Team'
+      },
+      to,
+      subject,
+      html,
+      text: html.replace(/<[^>]*>/g, ''), // Plain text version
+      replyTo: process.env.EMAIL_FROM,
+      trackingSettings: {
+        clickTracking: { enable: false },
+        openTracking: { enable: false }
+      },
+      mailSettings: {
+        bypassListManagement: { enable: false },
+        sandboxMode: { enable: false }
+      },
+      categories: ['healthhub-notifications'],
+      customArgs: {
+        app: 'healthhub',
+        environment: process.env.NODE_ENV || 'production'
+      }
+    });
+    console.log(`Email sent to ${to}`);
+  } catch (error) {
+    console.error(`Error sending email to ${to}:`, error);
+    // We don't throw an error here to not fail the main request
+  }
 };
 
 
@@ -738,7 +738,38 @@ app.patch('/api/users/:healthId', async (req, res) => {
                 });
             });
         }
-        
+
+        // Notify DOCTOR when an existing appointment's date/time is updated
+        if (currentUser.role === 'Doctor' && Array.isArray(updates.appointments) && currentUser.email) {
+            const oldAppointments = new Map((currentUser.appointments || []).map(a => [a.id, a]));
+            for (const newAppt of updates.appointments) {
+                const oldAppt = oldAppointments.get(newAppt.id);
+                if (!oldAppt) continue; // creation handled elsewhere
+                const isDateTimeChange = (oldAppt.date !== newAppt.date) || (oldAppt.time !== newAppt.time);
+                if (isDateTimeChange) {
+                    try {
+                        await sendEmail({
+                            to: currentUser.email,
+                            subject: `Appointment Updated: ${newAppt.patientName || 'Patient'}`,
+                            html: `
+                                <p>Hi Dr. ${currentUser.name || ''},</p>
+                                <p>The appointment has been updated.</p>
+                                <ul>
+                                  <li><strong>Patient:</strong> ${newAppt.patientName || ''}</li>
+                                  <li><strong>Date:</strong> ${newAppt.date}</li>
+                                  <li><strong>Time:</strong> ${formatTimeForEmail(newAppt.time)}</li>
+                                  <li><strong>Hospital:</strong> ${currentUser.currentHospital || newAppt.hospitalName || ''}</li>
+                                </ul>
+                                <p>— HealthHub</p>
+                            `,
+                        });
+                    } catch (e) {
+                        console.error('Failed to send doctor update email:', e);
+                    }
+                }
+            }
+        }
+
         if (updates.password) {
             const salt = await bcrypt.genSalt(10);
             updates.password = await bcrypt.hash(updates.password, salt);
