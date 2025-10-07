@@ -1826,6 +1826,7 @@ app.post('/api/communications/to-patient', async (req, res) => {
             timestamp: new Date().toISOString(),
             message,
             imageUrl: imageUrl ? imageUrl : undefined,
+            read: false,
         };
 
         const updateResult = await User.updateOne(
@@ -1855,6 +1856,7 @@ app.post('/api/communications/from-patient', async (req, res) => {
             toId: doctorId,
             timestamp: new Date().toISOString(),
             message,
+            read: false,
         };
 
         const updateResult = await User.updateOne(
@@ -1902,6 +1904,24 @@ app.get('/api/chat/:userA/:userB', async (req, res) => {
     }
 });
 
+// Mark messages from peer as read for a given user
+app.post('/api/chat/mark-read', async (req, res) => {
+    try {
+        const { userId, peerId } = req.body;
+        if (!userId || !peerId) return res.status(400).json({ message: 'userId and peerId are required' });
+
+        const result = await User.updateOne(
+            { healthId: userId },
+            { $set: { 'communications.$[elem].read': true } },
+            { arrayFilters: [ { 'elem.from.id': peerId, 'elem.toId': userId, 'elem.read': { $ne: true } } ] }
+        );
+
+        res.json({ modifiedCount: result.modifiedCount || 0 });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error marking messages as read.', error: error.message });
+    }
+});
+
 // Send a chat message from any role; store it on the recipient's document communications array
 app.post('/api/chat/send', async (req, res) => {
     try {
@@ -1923,6 +1943,7 @@ app.post('/api/chat/send', async (req, res) => {
             timestamp: new Date().toISOString(),
             message,
             imageUrl: imageUrl ? imageUrl : undefined,
+            read: false,
         };
 
         const updateResult = await User.updateOne(
