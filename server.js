@@ -1925,7 +1925,7 @@ app.post('/api/chat/mark-read', async (req, res) => {
 // Send a chat message from any role; store it on the recipient's document communications array
 app.post('/api/chat/send', async (req, res) => {
     try {
-        const { fromId, toId, message, imageUrl } = req.body;
+        const { fromId, toId, message, imageUrl, replyTo } = req.body;
         if (!fromId || !toId || (!message && !imageUrl)) {
             return res.status(400).json({ message: 'fromId, toId and message or imageUrl are required.' });
         }
@@ -1944,6 +1944,13 @@ app.post('/api/chat/send', async (req, res) => {
             message,
             imageUrl: imageUrl ? imageUrl : undefined,
             read: false,
+            replyTo: replyTo && replyTo.id ? {
+                id: String(replyTo.id),
+                message: replyTo.message || undefined,
+                imageUrl: replyTo.imageUrl || undefined,
+                from: replyTo.from ? { id: String(replyTo.from.id), name: String(replyTo.from.name || '') } : undefined,
+                timestamp: replyTo.timestamp || undefined,
+            } : undefined,
         };
 
         const updateResult = await User.updateOne(
