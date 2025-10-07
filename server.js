@@ -227,6 +227,34 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
+// Delete a chat message by ID from a conversation between two users
+app.delete('/api/chat/:userA/:userB/:messageId', async (req, res) => {
+    try {
+        const { userA, userB, messageId } = req.params;
+        const [a, b] = await Promise.all([
+            User.findOne({ healthId: userA }),
+            User.findOne({ healthId: userB }),
+        ]);
+        if (!a || !b) return res.status(404).json({ message: 'One or both users not found' });
+
+        const beforeCountA = (a.communications || []).length;
+        const beforeCountB = (b.communications || []).length;
+
+        a.communications = (a.communications || []).filter(m => m.id !== messageId);
+        b.communications = (b.communications || []).filter(m => m.id !== messageId);
+
+        await Promise.all([a.save(), b.save()]);
+
+        const removed = (beforeCountA !== (a.communications || []).length) || (beforeCountB !== (b.communications || []).length);
+        if (!removed) {
+            return res.status(404).json({ message: 'Message not found in either user' });
+        }
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ message: 'Server error deleting chat message.', error: error.message });
+    }
+});
+
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { identifier, password } = req.body;
