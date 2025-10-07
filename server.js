@@ -231,22 +231,13 @@ app.post('/api/auth/register', async (req, res) => {
 app.delete('/api/chat/:userA/:userB/:messageId', async (req, res) => {
     try {
         const { userA, userB, messageId } = req.params;
-        const [a, b] = await Promise.all([
-            User.findOne({ healthId: userA }),
-            User.findOne({ healthId: userB }),
+
+        const [resA, resB] = await Promise.all([
+            User.updateOne({ healthId: userA }, { $pull: { communications: { id: messageId } } }),
+            User.updateOne({ healthId: userB }, { $pull: { communications: { id: messageId } } }),
         ]);
-        if (!a || !b) return res.status(404).json({ message: 'One or both users not found' });
 
-        const beforeCountA = (a.communications || []).length;
-        const beforeCountB = (b.communications || []).length;
-
-        a.communications = (a.communications || []).filter(m => m.id !== messageId);
-        b.communications = (b.communications || []).filter(m => m.id !== messageId);
-
-        await Promise.all([a.save(), b.save()]);
-
-        const removed = (beforeCountA !== (a.communications || []).length) || (beforeCountB !== (b.communications || []).length);
-        if (!removed) {
+        if ((resA.modifiedCount || 0) === 0 && (resB.modifiedCount || 0) === 0) {
             return res.status(404).json({ message: 'Message not found in either user' });
         }
         res.status(204).send();
@@ -1866,8 +1857,13 @@ app.post('/api/communications/from-patient', async (req, res) => {
             message,
         };
 
-        doctor.communications = [newComm, ...(doctor.communications || [])];
-        await doctor.save();
+        const updateResult = await User.updateOne(
+            { healthId: doctorId },
+            { $push: { communications: { $each: [newComm], $position: 0 } } }
+        );
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).json({ message: 'Doctor not found' });
+        }
         res.status(201).json(newComm);
     } catch(error) {
         res.status(500).json({ message: 'Server error sending communication.', error: error.message });
@@ -1929,9 +1925,13 @@ app.post('/api/chat/send', async (req, res) => {
             imageUrl: imageUrl ? imageUrl : undefined,
         };
 
-        // Store message on recipient document (toUser)
-        toUser.communications = [newComm, ...(toUser.communications || [])];
-        await toUser.save();
+        const updateResult = await User.updateOne(
+            { healthId: toUser.healthId },
+            { $push: { communications: { $each: [newComm], $position: 0 } } }
+        );
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).json({ message: 'Recipient not found' });
+        }
 
         res.status(201).json(newComm);
     } catch (error) {
