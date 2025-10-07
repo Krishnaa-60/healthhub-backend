@@ -1846,6 +1846,71 @@ app.post('/api/communications/from-patient', async (req, res) => {
     }
 });
 
+// Unified Chat APIs
+// Fetch a conversation between two users (doctor <-> patient) by merging both sides' communications
+app.get('/api/chat/:userA/:userB', async (req, res) => {
+    try {
+        const { userA, userB } = req.params; // healthIds
+        const [a, b] = await Promise.all([
+            User.findOne({ healthId: userA }),
+            User.findOne({ healthId: userB }),
+        ]);
+        if (!a || !b) return res.status(404).json({ message: 'One or both users not found' });
+
+        // Messages sent TO A by B are stored on A if B is a doctor (to-patient route)
+        const msgsToAFromB = (a.communications || []).filter(m => m.from?.id === userB && m.toId === userA);
+        // Messages sent TO B by A are stored on B when A is a patient (from-patient route)
+        const msgsToBFromA = (b.communications || []).filter(m => m.from?.id === userA && m.toId === userB);
+
+        const messages = [...msgsToAFromB, ...msgsToBFromA]
+            .filter(m => !!m?.timestamp)
+            .sort((x, y) => new Date(x.timestamp).getTime() - new Date(y.timestamp).getTime());
+
+        res.json({
+            participants: [
+                { id: a.healthId, name: a.name, role: a.role },
+                { id: b.healthId, name: b.name, role: b.role },
+            ],
+            messages,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching chat.', error: error.message });
+    }
+});
+
+// Send a chat message from any role; store it on the recipient's document communications array
+app.post('/api/chat/send', async (req, res) => {
+    try {
+        const { fromId, toId, message, imageUrl } = req.body;
+        if (!fromId || !toId || (!message && !imageUrl)) {
+            return res.status(400).json({ message: 'fromId, toId and message or imageUrl are required.' });
+        }
+
+        const [fromUser, toUser] = await Promise.all([
+            User.findOne({ healthId: fromId }),
+            User.findOne({ healthId: toId }),
+        ]);
+        if (!fromUser || !toUser) return res.status(404).json({ message: 'Sender or recipient not found' });
+
+        const newComm = {
+            id: `COMM_${Date.now()}`,
+            from: { id: fromUser.healthId, name: fromUser.name },
+            toId: toUser.healthId,
+            timestamp: new Date().toISOString(),
+            message,
+            imageUrl: imageUrl ? imageUrl : undefined,
+        };
+
+        // Store message on recipient document (toUser)
+        toUser.communications = [newComm, ...(toUser.communications || [])];
+        await toUser.save();
+
+        res.status(201).json(newComm);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error sending chat message.', error: error.message });
+    }
+});
+
 // --- Email Reminder System ---
 // Store sent reminders in memory (resets on server restart)
 const sentReminders = new Set();
