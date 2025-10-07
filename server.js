@@ -27,19 +27,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Lookup user by email
-app.get('/api/users/by-email', async (req, res) => {
-    try {
-        const email = String(req.query.email || '').trim().toLowerCase();
-        if (!email) return res.status(400).json({ message: 'email query param is required' });
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        res.json({ healthId: user.healthId, name: user.name, role: user.role, email: user.email });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error looking up user by email.', error: error.message });
-    }
-});
-
 app.use(express.json({ limit: '25mb' })); // Increased limit for base64 file uploads
 app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
@@ -216,6 +203,19 @@ mongoose.connect(process.env.DATABASE_URI)
 
 
 // --- API Routes ---
+
+// Lookup user by email
+app.get('/api/users/by-email', async (req, res) => {
+    try {
+        const email = String(req.query.email || '').trim().toLowerCase();
+        if (!email) return res.status(400).json({ message: 'email query param is required' });
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json({ healthId: user.healthId, name: user.name, role: user.role, email: user.email });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error looking up user by email.', error: error.message });
+    }
+});
 
 // --- Authentication Routes ---
 app.post('/api/auth/register', async (req, res) => {
