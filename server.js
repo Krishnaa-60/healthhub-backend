@@ -27,7 +27,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '10mb' })); // Increased limit for base64 file uploads
+app.use(express.json({ limit: '25mb' })); // Increased limit for base64 file uploads
+app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
 // --- SendGrid Configuration ---
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
