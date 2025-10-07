@@ -27,6 +27,19 @@ app.use((req, res, next) => {
   next();
 });
 
+// Lookup user by email
+app.get('/api/users/by-email', async (req, res) => {
+    try {
+        const email = String(req.query.email || '').trim().toLowerCase();
+        if (!email) return res.status(400).json({ message: 'email query param is required' });
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json({ healthId: user.healthId, name: user.name, role: user.role, email: user.email });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error looking up user by email.', error: error.message });
+    }
+});
+
 app.use(express.json({ limit: '25mb' })); // Increased limit for base64 file uploads
 app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
@@ -1926,7 +1939,7 @@ app.post('/api/chat/mark-read', async (req, res) => {
 // Send a chat message from any role; store it on the recipient's document communications array
 app.post('/api/chat/send', async (req, res) => {
     try {
-        const { fromId, toId, message, imageUrl, replyTo } = req.body;
+        const { fromId, toId, message, imageUrl, replyTo, recordShare } = req.body;
         if (!fromId || !toId || (!message && !imageUrl)) {
             return res.status(400).json({ message: 'fromId, toId and message or imageUrl are required.' });
         }
@@ -1951,6 +1964,17 @@ app.post('/api/chat/send', async (req, res) => {
                 imageUrl: replyTo.imageUrl || undefined,
                 from: replyTo.from ? { id: String(replyTo.from.id), name: String(replyTo.from.name || '') } : undefined,
                 timestamp: replyTo.timestamp || undefined,
+            } : undefined,
+            recordShare: recordShare && recordShare.recordId ? {
+                recordId: String(recordShare.recordId),
+                name: String(recordShare.name || ''),
+                category: recordShare.category || undefined,
+                disease: recordShare.disease || undefined,
+                files: Array.isArray(recordShare.files) ? recordShare.files.map(f => ({
+                    name: String(f.name || 'file'),
+                    content: String(f.content || ''),
+                })) : undefined,
+                dateAdded: recordShare.dateAdded || undefined,
             } : undefined,
         };
 
